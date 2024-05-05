@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -36,7 +37,7 @@ public class CurrentWeatherService {
 
     private static final Logger logger = LogManager.getLogger(CurrentWeatherService.class);
 
-    public CurrentWeatherResponseDto getCurrentWeather(String x, String y) {
+    public ResponseEntity<?> getCurrentWeather(String x, String y) {
         try {
             Map<String, String> dateTimeParams = dateTimeMethod();
             return sendGetRequest(x, y, dateTimeParams);
@@ -50,8 +51,8 @@ public class CurrentWeatherService {
     // 가독성이 중요하면 아래와 같이 바꿔주세요 여러분
     //    UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
     //    queryParams.forEach(builder::queryParam);
-    // 만약 인자들이 처음부터 끝까지 사용하기로 정해져있으면 list가 순회하는게 더 빠르니 이 경우 List를 사용하자
-    private CurrentWeatherResponseDto sendGetRequest(String x, String y, Map<String, String> dateTimeParams) {
+    // 만약 인자들이 처음부터 끝까지 사용하기로 정해져있고 key를 알필요 없으면 list가 순회하는게 더 빠르니 이 경우 List를 사용하자
+    private ResponseEntity<?> sendGetRequest(String x, String y, Map<String, String> dateTimeParams) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(currentWeatherUrl)
                 .queryParam("serviceKey", currentWeatherApiKey)
                 .queryParam("nx", x)
@@ -72,7 +73,7 @@ public class CurrentWeatherService {
             Map<String, String> weatherData = parseWeatherData(currentWeatherApiDto);
             CurrentWeatherResponseDto currentWeatherResponseDto = ToDtoFromMap(weatherData);
             System.out.println(currentWeatherResponseDto);
-            return currentWeatherResponseDto;
+            return ResponseEntity.ok(currentWeatherResponseDto);
         } catch (RestClientException e) {
             throw new RuntimeException("API 요청에 실패: " + e.getMessage(), e);
         } catch (Exception e) {

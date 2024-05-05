@@ -32,8 +32,7 @@ public class WeatherController {
     // API 서버의 에러 응답 형식이 JSON이 아닌 XML로 들어오기에 추가 처리를 해야함
     public ResponseEntity<?> getCurrentWeather(@RequestParam("x") String x, @RequestParam("y") String y) throws UnknownContentTypeException {
         try {
-            CurrentWeatherResponseDto weatherResponseDto = currentWeatherService.getCurrentWeather(x, y);
-            return ResponseEntity.ok(weatherResponseDto);
+            return ResponseEntity.ok(currentWeatherService.getCurrentWeather(x, y));
         } catch (Exception e) {
             Logger.getLogger("컨트롤러 에러 발생" + e.getMessage());
             e.printStackTrace();

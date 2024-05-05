@@ -107,6 +107,7 @@ public class HourlyWeatherService {
 
 
     private TreeMap<String, HourlyWeatherResponseDto.WeatherDetail> parseWeatherData(HourlyWeatherApiDto hourlyWeatherApiDto) {
+        // 파이썬에서는 딕셔너리를 사용, 딕셔너리는 삽입 순서를 보장하고 HashMap은 보장하지않음, 그런 이유로 TreeMap으로 대체
         TreeMap<String, HourlyWeatherResponseDto.WeatherDetail> detailsMap = new TreeMap<>();
 
         try {
@@ -142,17 +143,13 @@ public class HourlyWeatherService {
                     case "PTY":
                         detail.setRainAmount(value +"mm");
                         break;
-
-
                 }
-
                 detailsMap.put(dateTime, detail);
             });
         } catch (Exception e) {
             logger.error("DTO 파싱 중 에러 발생: " + e.getMessage(), e);
             return new TreeMap<>();
         }
-
         return detailsMap;
     }
 }
