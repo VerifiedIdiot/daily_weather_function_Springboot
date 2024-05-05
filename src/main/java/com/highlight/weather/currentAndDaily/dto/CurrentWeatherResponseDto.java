@@ -1,11 +1,9 @@
-package com.highlight.weather.refactored.dto;
+package com.highlight.weather.currentAndDaily.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 @Getter
 @Setter
-@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder

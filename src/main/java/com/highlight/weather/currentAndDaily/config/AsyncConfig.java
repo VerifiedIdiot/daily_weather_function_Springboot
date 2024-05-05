@@ -1,4 +1,4 @@
-package com.highlight.weather.refactored.config;
+package com.highlight.weather.currentAndDaily.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

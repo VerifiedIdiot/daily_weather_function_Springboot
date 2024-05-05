@@ -1,14 +1,13 @@
-package com.highlight.weather.refactored.service.currentWeather;
+package com.highlight.weather.currentAndDaily.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.util.JSONPObject;
-import com.highlight.weather.refactored.dto.CurrentWeatherJsonDto;
-import com.highlight.weather.refactored.dto.CurrentWeatherResponseDto;
+import com.highlight.weather.currentAndDaily.dto.CurrentWeatherApiDto;
+import com.highlight.weather.currentAndDaily.dto.CurrentWeatherResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -54,7 +53,7 @@ public class CurrentWeatherService {
     // 만약 인자들이 처음부터 끝까지 사용하기로 정해져있으면 list가 순회하는게 더 빠르니 이 경우 List를 사용하자
     private CurrentWeatherResponseDto sendGetRequest(String x, String y, Map<String, String> dateTimeParams) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(currentWeatherUrl)
-                .queryParam("ServiceKey", currentWeatherApiKey)
+                .queryParam("serviceKey", currentWeatherApiKey)
                 .queryParam("nx", x)
                 .queryParam("ny", y)
                 .queryParam("base_date", dateTimeParams.get("baseDate"))
@@ -63,14 +62,14 @@ public class CurrentWeatherService {
                 .queryParam("numOfRows", 10)
                 .queryParam("dataType", "JSON");
         try {
-
-            CurrentWeatherJsonDto currentWeatherJsonDto = restClient.get()
+            CurrentWeatherApiDto currentWeatherApiDto = restClient.get()
                     .uri(builder.toUriString())
+                    .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML_VALUE)
                     .retrieve()
-                    .toEntity(CurrentWeatherJsonDto.class)
+                    .toEntity(CurrentWeatherApiDto.class)
                     .getBody();
 
-            Map<String, String> weatherData = parseWeatherData(currentWeatherJsonDto);
+            Map<String, String> weatherData = parseWeatherData(currentWeatherApiDto);
             CurrentWeatherResponseDto currentWeatherResponseDto = ToDtoFromMap(weatherData);
             System.out.println(currentWeatherResponseDto);
             return currentWeatherResponseDto;
@@ -94,10 +93,10 @@ public class CurrentWeatherService {
         return dateTimeParams;
     }
 
-    private Map<String, String> parseWeatherData(CurrentWeatherJsonDto jsonResponse) {
+    private Map<String, String> parseWeatherData(CurrentWeatherApiDto currentWeatherApiDto) {
         try {
             Map<String, String> weatherData = new HashMap<>();
-            jsonResponse.getResponse().getBody().getItems().getItem().forEach(item -> {
+            currentWeatherApiDto.getResponse().getBody().getItems().getItem().forEach(item -> {
                 String category = item.getCategory();
                 String obsrValue = item.getObsrValue();
 
@@ -128,6 +127,7 @@ public class CurrentWeatherService {
             return Collections.emptyMap();
         }
     }
+
     //builder
     private static CurrentWeatherResponseDto ToDtoFromMap(Map<String, String> weatherData) {
         return CurrentWeatherResponseDto.builder()
