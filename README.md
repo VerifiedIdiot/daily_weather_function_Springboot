@@ -12,7 +12,9 @@
 - Swagger: (http://localhost:8080/swagger-ui/index.html#)
 
 ## 사전 준비 사항 및 주의사항
-- API KEY 발급([https://apihub.kma.go.kr/](https://www.data.go.kr/iim/api/selectAPIAcountView.do)) 이후에 반드시 디코딩된 key를 사용, 인코딩의경우 URI 클래스 사용으로 전처리 해야함. </br>(참고 : https://velog.io/@cco2416/%EC%A1%B8%EC%97%85%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8%EA%B3%B5%EA%B3%B5%EB%8D%B0%EC%9D%B4%ED%84%B0-%ED%8F%AC%ED%84%B8-service-key-is-not-registered-error-%ED%95%B4%EA%B2%B0-%EB%B0%A9%EB%B2%95)
+- API KEY 발급([https://apihub.kma.go.kr/](https://www.data.go.kr/iim/api/selectAPIAcountView.do)) 발급된 API키를 사용할때는 각 방식에(인코딩 or 디코딩) 따라서 세심한 주의가 필요하다 </br>
+  나의 경우 UriComponentsBuilder를 사용하여 요청 파라미터들을 인코딩 처리를 하는데, 이 경우 "+"를 공백으로 처리하여 이 부분에 한해서 추가적인 처리가 필요하였음
+  </br>(참고 : (https://velog.io/@naked_thunder/RestTemplate-API%EC%97%B0%EB%8F%99%ED%95%98%EA%B8%B0), https://velog.io/@yeahg_dev/%EA%B3%B5%EA%B3%B5%EB%8D%B0%EC%9D%B4%ED%84%B0%ED%8F%AC%ED%84%B8-SERVICEKEYISNOTREGISTEREDERROR-%EC%9B%90%EC%9D%B8-%ED%8C%8C%ED%97%A4%EC%B9%98%EA%B8%B0 )
 - content-type을 JSON으로 설정을 해도 옳바른 결과값을 제외한 상태 메시지는 XML로 반환되니 ResponseEntity<?> 처리로 유연하게 응답을 받던지 try-catch 블록에 XML 파싱 로직을 강구한다. </br>
 (참고 : https://kdev.ing/data-go-openapi/)
   
