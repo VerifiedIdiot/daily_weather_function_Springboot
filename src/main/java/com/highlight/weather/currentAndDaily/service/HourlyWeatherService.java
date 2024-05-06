@@ -14,8 +14,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.UnknownContentTypeException;
+import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
@@ -48,25 +50,28 @@ public class HourlyWeatherService {
 
 
     }
-    // 스프링부트에서 사용하는 API 클라이언트 객체들은 자동적으로 인코딩을 진행하는데, 그로인해서 공공기관 API에서 발급받은 키 중에 디코딩된 키를 사용해야한다
-    // 그런데, 여기서 W3C에 따르면 "+"는 쿼리 스트링에서 플러스 사인은 공백의 축약형으로 해석된다.
-    // 그렇기 때문에 "+"를 데이터로써 취급하기 위해서는 "%20"으로의 변환이 필요하다.
+    // 인자가 너무 많은경우 Map<K,V>로 받을 수 있지만 같은 취준생들에게 공유하기 위해서 다 변수로 받음
+    // 가독성이 중요하면 아래와 같이 바꿔주세요 여러분
+    //     UriComponents uriComponents = UriComponentsBuilder.fromHttpUrl(url);
+    //    queryParams.forEach(builder::queryParam);
+    // 만약 인자들이 처음부터 끝까지 사용하기로 정해져있고 key를 알필요 없으면 list가 순회하는게 더 빠르니 이 경우 List를 사용하자
     private ResponseEntity<?> sendGetRequest(String x, String y, Map<String, String> dateTimeParams) {
-        String encodedApiKey = URLEncoder.encode(hourlyWeatherApiKey, StandardCharsets.UTF_8).replace("+", "%20");
-
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(hourlyWeatherUrl)
-                .queryParam("ServiceKey", encodedApiKey)
+        String uri = UriComponentsBuilder.fromHttpUrl(hourlyWeatherUrl)
+                .queryParam("ServiceKey", hourlyWeatherApiKey)
                 .queryParam("nx", x)
                 .queryParam("ny", y)
                 .queryParam("base_date", dateTimeParams.get("baseDate"))
                 .queryParam("base_time", dateTimeParams.get("baseTime"))
                 .queryParam("pageNo", 1)
                 .queryParam("numOfRows", 301)
-                .queryParam("dataType", "JSON");
+                .queryParam("dataType", "JSON")
+                .build()
+                .toString();
+
 
         try {
             HourlyWeatherApiDto hourlyWeatherApiDto = restClient.get()
-                    .uri(builder.toUriString())
+                    .uri(uri)
                     .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                     .retrieve()
                     .toEntity(HourlyWeatherApiDto.class)
@@ -76,7 +81,7 @@ public class HourlyWeatherService {
             return ResponseEntity.ok(weatherData);
         } catch (UnknownContentTypeException e) {
             ResponseEntity<?> response = restClient.get()
-                    .uri(builder.toUriString())
+                    .uri(uri)
                     .retrieve()
                     .toEntity(String.class);
             return response;

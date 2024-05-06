@@ -14,10 +14,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.UnknownContentTypeException;
+import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
+
+import java.net.URI;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
@@ -52,37 +53,36 @@ public class CurrentWeatherService {
 
     // 인자가 너무 많은경우 Map<K,V>로 받을 수 있지만 같은 취준생들에게 공유하기 위해서 다 변수로 받음
     // 가독성이 중요하면 아래와 같이 바꿔주세요 여러분
-    //    UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
+    //     UriComponents uriComponents = UriComponentsBuilder.fromHttpUrl(url);
     //    queryParams.forEach(builder::queryParam);
     // 만약 인자들이 처음부터 끝까지 사용하기로 정해져있고 key를 알필요 없으면 list가 순회하는게 더 빠르니 이 경우 List를 사용하자
     private ResponseEntity<?> sendGetRequest(String x, String y, Map<String, String> dateTimeParams) {
-
-        String encodedApiKey = URLEncoder.encode(currentWeatherApiKey, StandardCharsets.UTF_8).replace("+", "%20");
-
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(currentWeatherUrl)
-                .queryParam("serviceKey", encodedApiKey)
+        String uri = UriComponentsBuilder.fromHttpUrl(currentWeatherUrl)
+                .queryParam("ServiceKey", currentWeatherApiKey)
                 .queryParam("nx", x)
                 .queryParam("ny", y)
                 .queryParam("base_date", dateTimeParams.get("baseDate"))
                 .queryParam("base_time", dateTimeParams.get("baseTime"))
                 .queryParam("pageNo", 1)
                 .queryParam("numOfRows", 10)
-                .queryParam("dataType", "JSON");
+                .queryParam("dataType", "JSON")
+                // 자동 인코딩 방지하여 쿼리파마리터의 값 그대로 url 구성
+                .build()
+                .toString();
         try {
+            System.out.println(uri);
             CurrentWeatherApiDto currentWeatherApiDto = restClient.get()
-                    .uri(builder.toUriString())
+                    .uri(uri)
                     .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                     .retrieve()
                     .toEntity(CurrentWeatherApiDto.class)
                     .getBody();
-
             Map<String, String> weatherData = parseWeatherData(currentWeatherApiDto);
             CurrentWeatherResponseDto currentWeatherResponseDto = ToDtoFromMap(weatherData);
-
             return ResponseEntity.ok(currentWeatherResponseDto);
         } catch (UnknownContentTypeException e) {
             ResponseEntity<?> response = restClient.get()
-                    .uri(builder.toUriString())
+                    .uri(uri)
                     .retrieve()
                     .toEntity(String.class);
             return response;
