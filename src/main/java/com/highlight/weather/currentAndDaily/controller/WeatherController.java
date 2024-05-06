@@ -30,9 +30,9 @@ public class WeatherController {
     @GetMapping("/get-current")
     @Operation(summary = "날씨정보 조회", description = "사용자 위치 기반 실시간 날씨 정보를 조회합니다.")
     // API 서버의 에러 응답 형식이 JSON이 아닌 XML로 들어오기에 추가 처리를 해야함
-    public ResponseEntity<?> getCurrentWeather(@RequestParam("x") String x, @RequestParam("y") String y) throws UnknownContentTypeException {
+    public ResponseEntity<?> getCurrentWeather(@RequestParam("x") String x, @RequestParam("y") String y) throws UnknownContentTypeException ,NullPointerException {
         try {
-            return ResponseEntity.ok(currentWeatherService.getCurrentWeather(x, y));
+            return ResponseEntity.ok(currentWeatherService.getCurrentWeather(x, y).getBody());
         } catch (Exception e) {
             Logger.getLogger("컨트롤러 에러 발생" + e.getMessage());
             e.printStackTrace();
@@ -44,7 +44,7 @@ public class WeatherController {
     @GetMapping("/get-hourly")
     @Operation(summary = "날씨정보 조회", description = "사용자 위치 기반 한시간 단위 하루의 날씨 정보를 조회합니다.")
     // API 서버의 에러 응답 형식이 JSON이 아닌 XML로 들어오기에 추가 처리를 해야함
-    public ResponseEntity<?> getHourlyWeather(@RequestParam("x") String x, @RequestParam("y") String y) throws UnknownContentTypeException {
+    public ResponseEntity<?> getHourlyWeather(@RequestParam("x") String x, @RequestParam("y") String y) throws UnknownContentTypeException, NullPointerException {
         try {
             return ResponseEntity.ok(hourlyWeatherService.getHourlyWeather(x, y).getBody());
         } catch (Exception e) {

@@ -13,8 +13,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.UnknownContentTypeException;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
@@ -53,8 +56,11 @@ public class CurrentWeatherService {
     //    queryParams.forEach(builder::queryParam);
     // 만약 인자들이 처음부터 끝까지 사용하기로 정해져있고 key를 알필요 없으면 list가 순회하는게 더 빠르니 이 경우 List를 사용하자
     private ResponseEntity<?> sendGetRequest(String x, String y, Map<String, String> dateTimeParams) {
+
+        String encodedApiKey = URLEncoder.encode(currentWeatherApiKey, StandardCharsets.UTF_8).replace("+", "%20");
+
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(currentWeatherUrl)
-                .queryParam("serviceKey", currentWeatherApiKey)
+                .queryParam("serviceKey", encodedApiKey)
                 .queryParam("nx", x)
                 .queryParam("ny", y)
                 .queryParam("base_date", dateTimeParams.get("baseDate"))
@@ -65,17 +71,23 @@ public class CurrentWeatherService {
         try {
             CurrentWeatherApiDto currentWeatherApiDto = restClient.get()
                     .uri(builder.toUriString())
-                    .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML_VALUE)
+                    .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                     .retrieve()
                     .toEntity(CurrentWeatherApiDto.class)
                     .getBody();
 
             Map<String, String> weatherData = parseWeatherData(currentWeatherApiDto);
             CurrentWeatherResponseDto currentWeatherResponseDto = ToDtoFromMap(weatherData);
-            System.out.println(currentWeatherResponseDto);
+
             return ResponseEntity.ok(currentWeatherResponseDto);
+        } catch (UnknownContentTypeException e) {
+            ResponseEntity<?> response = restClient.get()
+                    .uri(builder.toUriString())
+                    .retrieve()
+                    .toEntity(String.class);
+            return response;
         } catch (RestClientException e) {
-            throw new RuntimeException("API 요청에 실패: " + e.getMessage(), e);
+            throw new RuntimeException("RestClient 에러 : " + e.getMessage(), e);
         } catch (Exception e) {
             throw new RuntimeException("알 수 없는 에러가 발생: ", e);
         }

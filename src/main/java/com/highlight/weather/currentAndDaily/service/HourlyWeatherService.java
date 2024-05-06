@@ -16,6 +16,8 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.UnknownContentTypeException;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -36,7 +38,7 @@ public class HourlyWeatherService {
 
     public ResponseEntity<?> getHourlyWeather(String x, String y) {
         try {
-            System.out.println(hourlyWeatherApiKey);
+
             Map<String, String> dateTimeParams = dateTimeMethod();
             return sendGetRequest(x, y, dateTimeParams);
         } catch (Exception e) {
@@ -46,10 +48,14 @@ public class HourlyWeatherService {
 
 
     }
-
+    // 스프링부트에서 사용하는 API 클라이언트 객체들은 자동적으로 인코딩을 진행하는데, 그로인해서 공공기관 API에서 발급받은 키 중에 디코딩된 키를 사용해야한다
+    // 그런데, 여기서 W3C에 따르면 "+"는 쿼리 스트링에서 플러스 사인은 공백의 축약형으로 해석된다.
+    // 그렇기 때문에 "+"를 데이터로써 취급하기 위해서는 "%20"으로의 변환이 필요하다.
     private ResponseEntity<?> sendGetRequest(String x, String y, Map<String, String> dateTimeParams) {
+        String encodedApiKey = URLEncoder.encode(hourlyWeatherApiKey, StandardCharsets.UTF_8).replace("+", "%20");
+
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(hourlyWeatherUrl)
-                .queryParam("ServiceKey", hourlyWeatherApiKey)
+                .queryParam("ServiceKey", encodedApiKey)
                 .queryParam("nx", x)
                 .queryParam("ny", y)
                 .queryParam("base_date", dateTimeParams.get("baseDate"))
@@ -57,7 +63,6 @@ public class HourlyWeatherService {
                 .queryParam("pageNo", 1)
                 .queryParam("numOfRows", 301)
                 .queryParam("dataType", "JSON");
-
 
         try {
             HourlyWeatherApiDto hourlyWeatherApiDto = restClient.get()
@@ -67,13 +72,11 @@ public class HourlyWeatherService {
                     .toEntity(HourlyWeatherApiDto.class)
                     .getBody();
 
-            System.out.println(hourlyWeatherApiDto.getResponse());
             Map<String, HourlyWeatherResponseDto.WeatherDetail> weatherData = parseWeatherData(hourlyWeatherApiDto);
             return ResponseEntity.ok(weatherData);
         } catch (UnknownContentTypeException e) {
             ResponseEntity<?> response = restClient.get()
                     .uri(builder.toUriString())
-                    .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                     .retrieve()
                     .toEntity(String.class);
             return response;
@@ -112,8 +115,6 @@ public class HourlyWeatherService {
 
         try {
             hourlyWeatherApiDto.getResponse().getBody().getItems().getItem().forEach(item -> {
-                String date = item.getFcstDate();
-                String time = item.getFcstTime();
                 String dateTime = item.getFcstDate() + item.getFcstTime();
                 HourlyWeatherResponseDto.WeatherDetail detail = detailsMap.getOrDefault(dateTime, new HourlyWeatherResponseDto.WeatherDetail());
 
@@ -146,6 +147,7 @@ public class HourlyWeatherService {
                 }
                 detailsMap.put(dateTime, detail);
             });
+
         } catch (Exception e) {
             logger.error("DTO 파싱 중 에러 발생: " + e.getMessage(), e);
             return new TreeMap<>();
